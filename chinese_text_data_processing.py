@@ -1,59 +1,67 @@
 import jieba
 import math
 
-stop_words=set()
-def get_stop_words():
-	global stop_words
-	with open('Chinese-stop-words.txt','r',encoding='gbk') as f:
-		for line in f:
-			stop_words.add(line.strip())
 
-result=[]
-glo_count={}
-def tokenization():
-	global result
-	global glo_count
-	with open('lily/Basketball.txt','r',encoding='utf-8') as f:
-		for line in f:
-			dic={}
-			count=0
-			s=jieba.cut(line.strip())
-			for item in s:
-				if not item in stop_words:
-					if not item in dic:
-						dic[item]={
-							'count':0
-						}
-						if not item in glo_count:
-							glo_count[item]=0
-						glo_count[item]+=1
-					dic[item]['count']+=1
-					count+=1
-			result.append({
-				'result':dic,
-				'count_all':count
-				})
+class Process():
+	def __init__(self):
+		self.stop_words=set()
+		self.glo_count={}
+		self.result=[]
+		self.get_stop_words()
+	def get_stop_words(self):
+		global stop_words
+		with open('Chinese-stop-words.txt','r',encoding='gbk') as f:
+			for line in f:
+				self.stop_words.add(line.strip())
 
-def cal():
-	lines=len(result)
-	for line in result:
-		tokens=line['result']
-		count_all=line['count_all']
-		for token,values in tokens.items():
-			values['tf']=values['count']/count_all
-			values['idf']=math.log10(lines/glo_count[token])
-			values['tf-idf']=values['tf']*values['idf']
-			values['test']=glo_count[token]
+	def tokenization(self,file_name):
+		with open('lily/'+file_name,'r',encoding='utf-8') as f:
+			for line in f:
+				dic={}
+				count=0
+				s=jieba.cut(line.strip())
+				for item in s:
+					item=item.strip()
+					if not item:
+						continue
+					if not item in self.stop_words:
+						if not item in dic:
+							dic[item]={
+								'count':0
+							}
+							if not item in self.glo_count:
+								self.glo_count[item]=0
+							self.glo_count[item]+=1
+						dic[item]['count']+=1
+						count+=1
+				self.result.append({
+					'result':dic,
+					'count_all':count
+					})
 
-def sort_and_write():
-	with open('result/Basketball','w',encoding='utf-8') as f:
-		for line in result:
-			for key in sorted(line['result'],key=lambda k:line['result'][k]['tf-idf'],reverse=True):
-				f.write('%s=%.4f\t'%(key,line['result'][key]['tf-idf']))
-			f.write('\n')
+	def cal(self):
+		lines=len(self.result)
+		for line in self.result:
+			tokens=line['result']
+			count_all=line['count_all']
+			for token,values in tokens.items():
+				values['tf']=values['count']/count_all
+				values['idf']=math.log10(lines/self.glo_count[token])
+				values['tf-idf']=values['tf']*values['idf']
+
+	def sort_and_write(self,file_name):
+		with open('result/'+file_name,'w',encoding='utf-8') as f:
+			for line in self.result:
+				for key in sorted(line['result'],key=lambda k:line['result'][k]['tf-idf'],reverse=True):
+					f.write('%s=%.4f\t'%(key,line['result'][key]['tf-idf']))
+				f.write('\n')
+	def start_once(self,file_name):
+		self.glo_count={}
+		self.result=[]
+		self.tokenization(file_name)
+		self.cal()
+		self.sort_and_write(file_name)
 
 if __name__=='__main__':
-	get_stop_words()
-	tokenization()
-	cal()
-	sort_and_write()
+	s=Process()
+	s.start_once('Basketball.txt')
