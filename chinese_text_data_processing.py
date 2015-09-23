@@ -1,5 +1,6 @@
 import jieba
 import math
+import os
 
 
 class Process():
@@ -8,8 +9,9 @@ class Process():
 		self.glo_count={}
 		self.result=[]
 		self.get_stop_words()
+		if not os.path.exists('result'):
+			os.mkdir('result')
 	def get_stop_words(self):
-		global stop_words
 		with open('Chinese-stop-words.txt','r',encoding='gbk') as f:
 			for line in f:
 				self.stop_words.add(line.strip())
@@ -61,7 +63,13 @@ class Process():
 		self.tokenization(file_name)
 		self.cal()
 		self.sort_and_write(file_name)
+	def start(self):
+		if not os.path.isdir('lily'):
+			print('sample floder not found')
+			return
+		for file_name in os.listdir('lily'):
+			self.start_once(file_name)
 
 if __name__=='__main__':
 	s=Process()
-	s.start_once('Basketball.txt')
+	s.start()
