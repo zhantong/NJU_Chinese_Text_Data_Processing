@@ -45,14 +45,15 @@ def cal():
 			values['tf-idf']=values['tf']*values['idf']
 			values['test']=glo_count[token]
 
-def sort():
-	for line in result:
-		print('--------------------------------------')
-		for key in sorted(line['result'],key=lambda k:line['result'][k]['tf-idf'],reverse=True):
-			print(key,line['result'][key])
+def sort_and_write():
+	with open('result/Basketball','w',encoding='utf-8') as f:
+		for line in result:
+			for key in sorted(line['result'],key=lambda k:line['result'][k]['tf-idf'],reverse=True):
+				f.write('%s=%.4f\t'%(key,line['result'][key]['tf-idf']))
+			f.write('\n')
 
 if __name__=='__main__':
 	get_stop_words()
 	tokenization()
 	cal()
-	sort()
+	sort_and_write()
