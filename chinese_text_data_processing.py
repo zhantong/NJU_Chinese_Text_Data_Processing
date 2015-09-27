@@ -88,13 +88,13 @@ class Process():
                 values['tf-idf'] = values['tf'] * values['idf']  # 计算tf-idf
 
     def sort_and_write(self, file_name):
-        """以td-idf值由大到小排序，将结果写入文件
+        """形成td-idf值矩阵，将结果写入文件
         """
-        all_tokens = sorted(self.glo_count)
+        all_tokens = sorted(self.glo_count)  # 避免每次遍历时dict随机排序
         with open('result/' + file_name, 'w', encoding='utf-8') as f:
             for line in self.result:
                 for token in all_tokens:
-                    if token in line['result']:
+                    if token in line['result']:  # 区分token是否存在
                         f.write('%.4f\t' % line['result'][token]['tf-idf'])
                     else:
                         f.write('0\t')
