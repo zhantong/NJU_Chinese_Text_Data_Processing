@@ -55,6 +55,10 @@ class Process():
                     if not item:  # 忽略空字符串
                         continue
                     if not item in self.stop_words:  # 消除stop words
+
+                        with open('test/' + file_name, 'a', encoding='utf-8') as f:
+                            f.write('%s '%item)
+
                         if not item in dic:  # 词语不在dic中则首先创建
                             dic[item] = {
                                 'count': 0
@@ -64,10 +68,16 @@ class Process():
                             self.glo_count[item] += 1  # 更新词语出现行数
                         dic[item]['count'] += 1  # 更新词语出现次数
                         count += 1  # 更新每行词语总数
+
+                with open('test/' + file_name, 'a', encoding='utf-8') as f:
+                    f.write('\n')
+
                 self.result.append({
                     'result': dic,
                     'count_all': count
                 })
+
+
 
     def cal(self):
         """计算tf-idf
@@ -99,6 +109,7 @@ class Process():
                     else:
                         f.write('0\t')
                 f.write('\n')
+
 
     def start_once(self, file_name):
         """单次完整运行
