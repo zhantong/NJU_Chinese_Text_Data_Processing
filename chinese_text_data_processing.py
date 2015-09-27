@@ -90,12 +90,15 @@ class Process():
     def sort_and_write(self, file_name):
         """以td-idf值由大到小排序，将结果写入文件
         """
+        all_tokens = sorted(self.glo_count)
         with open('result/' + file_name, 'w', encoding='utf-8') as f:
             for line in self.result:
-                # 以tf-idf由大到小排序
-                for key in sorted(line['result'], key=lambda k: line['result'][k]['tf-idf'], reverse=True):
-                    f.write('%s=%.4f\t' % (key, line['result'][key]['tf-idf']))
-                f.write('\n')  # 换行
+                for token in all_tokens:
+                    if token in line['result']:
+                        f.write('%.4f\t' % line['result'][token]['tf-idf'])
+                    else:
+                        f.write('0\t')
+                f.write('\n')
 
     def start_once(self, file_name):
         """单次完整运行
