@@ -9,7 +9,7 @@ Python3.5 x64；
 需要第三方库jieba支持。
 stop words文件在同级目录下，文件名为Chinese-stop-words.txt；
 需要进行分析的文件在同级lily文件夹下。
-代码遍历lily文件夹下的所有文件，对每个文件首先分词、然后去除stop words、然后计算TF-IDF、最后根据TF-IDF排序并写入文件到同级result文件夹下。
+代码遍历lily文件夹下的所有文件，对每个文件首先分词、然后去除stop words、然后计算TF-IDF、最后将TF-IDF值矩阵写入文件到同级result文件夹下。
 """
 import jieba
 import math
@@ -55,10 +55,6 @@ class Process():
                     if not item:  # 忽略空字符串
                         continue
                     if not item in self.stop_words:  # 消除stop words
-
-                        with open('test/' + file_name, 'a', encoding='utf-8') as f:
-                            f.write('%s '%item)
-
                         if not item in dic:  # 词语不在dic中则首先创建
                             dic[item] = {
                                 'count': 0
@@ -68,16 +64,10 @@ class Process():
                             self.glo_count[item] += 1  # 更新词语出现行数
                         dic[item]['count'] += 1  # 更新词语出现次数
                         count += 1  # 更新每行词语总数
-
-                with open('test/' + file_name, 'a', encoding='utf-8') as f:
-                    f.write('\n')
-
                 self.result.append({
                     'result': dic,
                     'count_all': count
                 })
-
-
 
     def cal(self):
         """计算tf-idf
@@ -93,7 +83,7 @@ class Process():
             count_all = line['count_all']  # 每行词语总数
             for token, values in tokens.items():
                 values['tf'] = values['count'] / count_all  # 计算tf
-                values['idf'] = math.log10(
+                values['idf'] = math.log(
                     lines / self.glo_count[token])  # 计算idf
                 values['tf-idf'] = values['tf'] * values['idf']  # 计算tf-idf
 
@@ -109,7 +99,6 @@ class Process():
                     else:
                         f.write('0\t')
                 f.write('\n')
-
 
     def start_once(self, file_name):
         """单次完整运行
