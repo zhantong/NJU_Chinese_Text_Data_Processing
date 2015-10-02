@@ -21,7 +21,7 @@ class Process():
     def __init__(self):
         """初始化
         初始化声明需要用到的变量；
-        判断用于保存结果的result是否存在，不存在则创建。
+        判断用于保存结果的result文件夹是否存在，不存在则创建。
         """
         self.stop_words = set()  # 保存stop words
         self.glo_count = {}  # 保存所有文件中每个词语出现的行数（区别于次数）
@@ -42,7 +42,8 @@ class Process():
     def tokenization(self, file_name):
         """分词并整理，消除stop words，计算词语出现次数
         将jieba分词得到每个单词加入到dict，以单词为key，value为dict
-        self.result如[{{'a':{'count':1},...},'count_all':50},...]
+        result如[{{'a':{'count':1},...},'count_all':50},...]
+        self.result还会记录文件名，为生成结果文件提供便利
         此外还会记录每行text的消除stop words后的词语总数，临时变量count
         如果某行出现某词，则在glo_count中对应加1，以计算词语出现总行数
         """
@@ -115,10 +116,14 @@ class Process():
         if not os.path.isdir('lily'):
             print('sample floder not found')
             return
+        print('遍历文件...')
         for file_name in os.listdir('lily'):  # 遍历lily下的文件
             self.tokenization(file_name)
+        print('计算TF-IDF...')
         self.cal()
+        print('写入文件...')
         self.write()
+        print('完成！')
 
 if __name__ == '__main__':
     s = Process()
