@@ -9,7 +9,7 @@ Python3.5 x64；
 需要第三方库jieba支持。
 stop words文件在同级目录下，文件名为Chinese-stop-words.txt；
 需要进行分析的文件在同级lily文件夹下。
-代码遍历lily文件夹下的所有文件，对每个文件首先分词、然后去除stop words、然后计算TF-IDF、最后根据TF-IDF排序并写入文件到同级result文件夹下。
+代码遍历lily文件夹下的所有文件，对每个文件首先分词、然后去除stop words，然后计算TF-IDF、最后根据TF-IDF值写入文件到同级result文件夹下。
 """
 import jieba
 import math
@@ -26,6 +26,7 @@ class Process():
         self.stop_words = set()  # 保存stop words
         self.glo_count = {}  # 保存文件中每个词语出现的行数（区别于次数）
         self.result = []  # 保存最终结果
+        self.line_all=0
         self.get_stop_words()  # 初始化时即读取stop words
         if not os.path.exists('result'):  # 保存结果文件的目录不存在则创建
             os.mkdir('result')
@@ -45,8 +46,10 @@ class Process():
         此外还会记录每行text的词语总数，临时变量count
         以及每个词语共出现在多少行text中，保存到glo_count
         """
+        res=[]
         with open('lily/' + file_name, 'r', encoding='utf-8') as f:
             for line in f:
+                self.line_all+=1
                 dic = {}  # 记录每一行的词语
                 count = 0  # 每行中词语总数
                 s = jieba.cut(line.strip())
@@ -64,10 +67,14 @@ class Process():
                             self.glo_count[item] += 1  # 更新词语出现行数
                         dic[item]['count'] += 1  # 更新词语出现次数
                         count += 1  # 更新每行词语总数
-                self.result.append({
+                res.append({
                     'result': dic,
                     'count_all': count
                 })
+        self.result.append({
+            'content':res,
+            'file_name':file_name
+            })
 
     def cal(self):
         """计算tf-idf
@@ -77,36 +84,41 @@ class Process():
         总行数，
         可以计算得到tf-idf。
         """
-        lines = len(self.result)  # 总行数
-        for line in self.result:
-            tokens = line['result']
-            count_all = line['count_all']  # 每行词语总数
-            for token, values in tokens.items():
-                values['tf'] = values['count'] / count_all  # 计算tf
-                values['idf'] = math.log10(
-                    lines / self.glo_count[token])  # 计算idf
-                values['tf-idf'] = values['tf'] * values['idf']  # 计算tf-idf
+        for f in self.result:
 
-    def sort_and_write(self, file_name):
+            #lines = len(f['content'])  # 总行数
+            for line in f['content']:
+                tokens = line['result']
+                count_all = line['count_all']  # 每行词语总数
+                for token, values in tokens.items():
+                    values['tf'] = values['count'] / count_all  # 计算tf
+                    values['idf'] = math.log(
+                        self.line_all / self.glo_count[token])  # 计算idf
+                    values['tf-idf'] = values['tf'] * values['idf']  # 计算tf-idf
+
+
+    def write(self):
         """形成td-idf值矩阵，将结果写入文件
         """
         all_tokens = sorted(self.glo_count)  # 避免每次遍历时dict随机排序
-        with open('result/' + file_name, 'w', encoding='utf-8') as f:
-            for line in self.result:
-                for token in all_tokens:
-                    if token in line['result']:  # 区分token是否存在
-                        f.write('%.4f\t' % line['result'][token]['tf-idf'])
-                    else:
-                        f.write('0\t')
-                f.write('\n')
+        for doc in self.result:
+            with open('result/'+doc['file_name'],'w',encoding='utf-8') as f:
+                for line in doc['content']:
+                    for token in all_tokens:
+                        if token in line['result']:
+                            f.write('%.4f\t'%line['result'][token]['tf-idf'])
+                        else:
+                            f.write('0\t')
+                    f.write('\n')
+        print(len(self.glo_count))
 
     def start_once(self, file_name):
         """单次完整运行
         只处理一个文件，
         每次开始处理前初始化变量。
         """
-        self.glo_count = {}  # 重新初始化变量
-        self.result = []
+        #self.glo_count = {}  # 重新初始化变量
+        #self.result = []
         self.tokenization(file_name)
         self.cal()
         self.sort_and_write(file_name)
@@ -119,7 +131,9 @@ class Process():
             print('sample floder not found')
             return
         for file_name in os.listdir('lily'):  # 遍历lily下的文件
-            self.start_once(file_name)
+            self.tokenization(file_name)
+        self.cal()
+        self.write()
 
 if __name__ == '__main__':
     s = Process()
